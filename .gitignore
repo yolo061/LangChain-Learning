@@ -1,3 +1,5 @@
+.gitignore
+
 # IDE
 .idea/
 
@@ -14,3 +16,6 @@ node_modules/
 # 构建产物（.docx_build 中的脚本保留版本管理，生成结果不提交）
 .docx_build/preview/
 .docx_build/preview.pdf
+
+# 从 Codex 导入的历史对话记录（本地参考，不提交）
+codex对话记录/
