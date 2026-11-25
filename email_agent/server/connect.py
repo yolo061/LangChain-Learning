@@ -16,6 +16,12 @@ def graph_post(url, payload=None):
     response.raise_for_status()
     return response.json() if response.content else None
 
+
+def graph_patch(url, payload=None):
+    response = requests.patch(url, headers={"Authorization": f"Bearer {get_token()}"}, json=payload)
+    response.raise_for_status()
+    return response.json() if response.content else None
+
 def list_inbox(top=5):
     url = (f"{BASE}/me/mailFolders/inbox/messages"
            f"?$top={top}"
@@ -46,15 +52,12 @@ def create_reply_draft(message_id : str, reply_body : str) -> dict:
 
 def update_draft_body(draft_id: str, body: str):
     url = f"{BASE}/me/messages/{draft_id}"
-    requests.patch(url, headers={"Authorization": f"Bearer {get_token()}"},
-                   json={"body": {"contentType": "Text", "content": body}})
-    # graph_patch 版本:requests.patch + raise_for_status,顺手补上
+    graph_patch(url, payload={"body": {"contentType": "Text", "content": body}})
 
 
 def send_draft(draft_id: str):
     url = f"{BASE}/me/messages/{draft_id}/send"
-    requests.post(url, headers={"Authorization": f"Bearer {get_token()}"})
-    # 同理加 raise_for_status;send 返回 202 无 body
+    graph_post(url)  # send 返回 202 无 body
 
 if __name__ == "__main__":
     msgs = list_inbox(3)          # 回到这个,文件夹清单那种调试代码先注释掉

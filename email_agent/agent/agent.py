@@ -19,9 +19,10 @@ def get_prompt(state):
         )
     )
 
-def get_agent():
+def get_agent(email_input: dict):
+    """构建回复 agent；工具集通过闭包绑定当前处理的邮件"""
     return create_agent(
         get_llm(),
-        tools=get_tools(),
+        tools=get_tools(email_input),
         middleware=[get_prompt],
     )

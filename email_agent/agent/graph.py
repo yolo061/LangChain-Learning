@@ -1,37 +1,40 @@
-from langgraph.graph import StateGraph, START
-from IPython.display import display, Image
 from pathlib import Path
 
-"""inner function"""
-from .triage import triage_router
-from .agent import create_agent
-from .triage import State
+from langgraph.graph import StateGraph, START
+
+from .agent import get_agent
+from .triage import State, triage_router
 
 # 设置目录
 PKG_ROOT = Path(__file__).resolve().parent.parent
 IMG_DIR = PKG_ROOT / "resources"
 IMG_DIR.mkdir(parents=True, exist_ok=True)
 
-def build_graph(response_agent : create_agent):
-    agent = StateGraph(State)
-    # 添加路由分类
-    agent : StateGraph = agent.add_node(triage_router)
-    # 添加回复处理agent
-    agent : StateGraph = agent.add_node("response_agent", response_agent)
-    agent : StateGraph = agent.add_edge(START, "triage_router")
+def build_graph(response_agent, checkpointer=None):
+    """组装大图：triage_router 分流，需要回复的进 response_agent。
 
-    return agent.compile()
+    传入 checkpointer 后支持 write_email 工具内的 interrupt 人工确认。
+    """
+    graph = StateGraph(State)
+    graph.add_node(triage_router)
+    graph.add_node("response_agent", response_agent)
+    graph.add_edge(START, "triage_router")
 
-def draw_graph(agent : build_graph):
-    # 保存图片
-    try :
-        # 打印图片
-        png = agent.get_graph(xray=True).draw_mermaid_png()
+    return graph.compile(checkpointer=checkpointer)
+
+def draw_graph(graph):
+    """绘制拓扑图：notebook 里 display，同时落盘到 resources/graph.png。
+
+    IPython 是 notebook 依赖，惰性导入保证纯脚本环境也能调用本模块。
+    """
+    try:
+        from IPython.display import display, Image
+
+        png = graph.get_graph(xray=True).draw_mermaid_png()
         display(Image(png))
 
-        # 保存图片
-        with open(IMG_DIR / "graph.png","wb") as graph:
-            graph.write(png)
+        with open(IMG_DIR / "graph.png", "wb") as f:
+            f.write(png)
 
         print("the graph successfully write")
     except Exception as e:

@@ -33,13 +33,7 @@ def _acquire_token() -> dict:
     print(flow["message"])
     result = app.acquire_token_by_device_flow(flow)
 
-    # if "access_token" in result:
-    #     raise RuntimeError(f'{result.get("error")}: {result.get("error_description")}')
-
-
     if "access_token" not in result:
-        print("=" * 30, "完整 result 如下", "=" * 30)
-        print(result)                    # ← 关键调试行
         raise RuntimeError(f'{result.get("error")}: {result.get("error_description")}')
     return result
 

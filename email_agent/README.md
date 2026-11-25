@@ -1,24 +1,27 @@
 # Email Agent
 
-接入 Outlook 个人邮箱的智能邮件助手。项目用 Microsoft Graph API 读取邮件，用 LangChain / LangGraph 构建分类与回复的 agent：新邮件到达后先被路由为 `ignore / notify / respond` 三类，需要回复的邮件由 agent 生成草稿，经人工确认后再发送，最终目标是配合 LangGraph store 实现按联系人的长期记忆。
+接入 Outlook 个人邮箱的智能邮件助手。项目用 Microsoft Graph API 读取邮件，用 LangChain / LangGraph 构建分类与回复的 agent：新邮件到达后先被 LLM 结构化输出路由为 `ignore / notify / respond` 三类，需要回复的邮件由 agent 调用工具起草回复，发送前通过 LangGraph `interrupt` 暂停等待人工审批（human-in-the-loop），批准后才真正发送，最终目标是配合 LangGraph store 实现按联系人的长期记忆。
 
 ```
 email_agent/
-├── main.py        # 总入口（待实现）
-├── client/        # Outlook 接入层：认证 + Graph API 调用
+├── main.py        # 总入口：拉收件箱 → 选邮件 → 跑图 → interrupt 审批循环
+├── config.py      # 环境配置（pydantic-settings，读 .env / 环境变量）
+├── webapp.py      # FastAPI 只读预览（列收件箱）
+├── server/        # Outlook 接入层：认证 + Graph API
 │   ├── auth.py        # device code flow 认证与 token 缓存
-│   └── connect.py     # Graph 接口连通性测试脚本
-├── agent/         # 智能层：模型、路由、工具、prompt
-│   ├── config.py      # 环境配置（待实现，计划用 pydantic-settings）
-│   ├── model.py       # LLM 实例工厂
-│   ├── prompts.py     # 提示词模板与分类规则
-│   ├── route.py       # 邮件分类的 Route schema
-│   ├── tools.py       # @tool 工具集
-│   └── email_agent_with_outlook.py   # agent 组装（骨架）
+│   └── connect.py     # Graph 封装：list_inbox / createReply 草稿 / send
+├── agent/         # 智能层：LangGraph 图
+│   ├── model.py           # LLM 实例工厂（DeepSeek）
+│   ├── profile.py         # 用户画像（注入 prompt）
+│   ├── prompts_template.py# 提示词模板与分类规则
+│   ├── triage.py          # 邮件分类 Route schema + triage_router(Command 路由)
+│   ├── tools.py           # @tool 工具集（闭包工厂绑定当前邮件，write_email 内 interrupt）
+│   ├── agent.py           # create_agent 组装（dynamic_prompt 中间件）
+│   └── graph.py           # build_graph：triage_router → response_agent（可挂 checkpointer）
 └── test/          # 实验笔记本
 ```
 
-运行方式：在仓库根目录执行 `python -m email_agent.main`，测试单个模块同理（如 `python -m email_agent.client.auth`），不要直接右键运行包内文件。
+运行方式：在仓库根目录执行 `python -m email_agent.main`，测试单个模块同理（如 `python -m email_agent.server.auth`），不要直接右键运行包内文件。
 
 ## Step 1 : 用户认证
 
@@ -73,4 +76,4 @@ token 缓存用 MSAL 的 `SerializableTokenCache`，序列化后落盘到 `token
 
 </details>
 
-当前进度：认证模块已完成并通过全部验收（两次运行验证、/me 返回 200）。下一步是 Graph 收件箱接口的裸调验证（列出未读、createReply 建草稿），通过后进入 `agent/` 层的工具封装。
+当前进度（2026-11-03）：主线全链跑通——收件 → triage 三分类 → `respond` 邮件由 agent 起草回复 → `interrupt` 人工审批 → 真实发送。人工确认已从工具内 `input()` 过渡方案升级为 LangGraph 标准的 interrupt/Command(resume) 方案（write_email 闭包绑定当前邮件，MemorySaver 检查点驱动暂停/恢复）。下一步候选：store 按联系人记忆、邮件正文 prompt 注入防御、LangSmith trace。

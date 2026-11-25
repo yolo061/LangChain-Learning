@@ -3,6 +3,8 @@
 基于 LangChain（1.x 新版包结构）的学习实践仓库，按 B 站课程合集（吴恩达 LangChain + LangGraph 四门课）分四个部分推进。第一部分的知识点整合在 `01_基于LangChain的大语言模型应用开发/00_LangChain_all_notes.md` 一个文件里，README 只做整体概览。
 
 > 🔗 **GitHub 仓库**：https://github.com/lonely-square-three/LangChain-Learning （本仓库与 Gitee 双端同步更新）
+>
+> 🤖 **给 AI agent**：动工前先读 [PROJECT_PROFILE.md](PROJECT_PROFILE.md)（项目画像：现状、目录、架构、下一步、禁区）。
 
 ## 环境
 
@@ -26,6 +28,16 @@
 - **`02_LangChain的功能工具和代理/`**（进行中）：函数调用、LCEL、标记提取、工具路由（P9–P16）
 - **`03_使用LangGraph进行长期代理记忆/`**：语义/情景/程序三层记忆（P17–P23）
 - **`04_LangGraph中的AI代理/`**：LangGraph 生产级 agent、human-in-the-loop（P24–P32）
+
+## 仓库其他目录
+
+课程之外，仓库里还有三块内容：
+
+- **`email_agent/`**：Outlook 邮件回复助手（LangGraph 实战项目）。计划与进度见 [email_agent/PLAN.md](email_agent/PLAN.md)，架构与面试讲解见 `面试准备/邮件助手_面试八股与项目详解.docx`。
+- **`personal_agent/`**：第二个练习项目（手机 → 服务器中转 → 电脑 Worker），见 [personal_agent/PLAN.md](personal_agent/PLAN.md)。
+- **`面试准备/`**：简历技能自测复盘、面试八股文档、LangChain/LangGraph 常见问题整理。
+- **`归档/`**：与本仓库学习路线无关或已失效的历史文件，仅存档不再维护。
+- **`codex对话记录/`**（本地，不提交）：从 Codex 导入的历史对话，索引见其中 `_索引.md`。
 
 ## 知识概览
 

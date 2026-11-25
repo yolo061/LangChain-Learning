@@ -1,6 +1,5 @@
 from typing import Literal, TypedDict, Annotated
 
-from langgraph_sdk.schema import Command
 from pydantic import BaseModel, Field
 from langgraph.graph import add_messages, END
 from langgraph.types import Command
@@ -8,7 +7,7 @@ from langgraph.types import Command
 # 导入prompt模版库
 from .prompts_template import triage_system_prompt, triage_user_prompt, prompt_instructions
 from .profile import profile
-from .model import get_llm # 相对导入
+from .model import get_llm
 
 
 
@@ -24,7 +23,9 @@ class Route(BaseModel):
     )
 
 class State(TypedDict):
-    email_input : str
+    email_input : dict
+    # triage_router 写入的分类结果（respond/ignore/notify），供看板与调试读取
+    triage : str
     # 给message绑定一个add_message行为
     messages : Annotated[list, add_messages]
 
@@ -39,7 +40,7 @@ def triage_router(state : State) -> Command[
     # load the profile
     author = state["email_input"]["author"]
     to = state["email_input"]["to"]
-    subject = state["email_input"]
+    subject = state["email_input"]["subject"]
     email_thread = state["email_input"]["email_thread"]
 
     system_prompt = triage_system_prompt.format(
@@ -72,17 +73,18 @@ def triage_router(state : State) -> Command[
         goto = "response_agent"
 
         update = {
+            "triage": "respond",
             "messages" : [
                 ("user", f"Respond to email {state['email_input']}")
             ]
         }
     elif result.classification == "ignore" :
         print("🚫 Classification: IGNORE - This email can be safely ignored")
-        update = None # update字段的名称
+        update = {"triage": "ignore"}
         goto = END # 结束字段
     elif result.classification == "notify" :
         print("🔔 Classification: NOTIFY - This email contains important information")
-        update = None
+        update = {"triage": "notify"}
         goto = END
     else :
         raise ValueError(f"Invalid classification: {result.classification}")
